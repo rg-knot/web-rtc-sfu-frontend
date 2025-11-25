@@ -57,6 +57,7 @@ const PeerConnection = (function(){
 
 // Join user
 createUserBtn.addEventListener("click", () => {
+    console.log("Emitting join-user for:", username.value);
     if(username.value !== "") {
         const box = document.querySelector(".username-input");
         socket.emit("join-user", username.value);
