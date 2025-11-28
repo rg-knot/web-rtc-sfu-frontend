@@ -10,7 +10,7 @@ const endCallBtn = document.getElementById("end-call-btn");
 //     transports: ["websocket", "polling"], // always include polling first
 //   });
   
-//   const socket = io("https://34.102.240.255:3000", {
+//   const socket = io("http://34.131.7.69:3000", {
 //     transports: ["websocket", "polling"], // always include polling first
 //   });
 
@@ -18,7 +18,7 @@ const endCallBtn = document.getElementById("end-call-btn");
 //     transports: ["websocket", "polling"], // always include polling first
 //   });
 
-  const socket = io("https://webrtc-test.knot.dating", {
+  const socket = io("https://webrtc-test-sfu.knot.dating", {
     transports: ["websocket", "polling"]
 });
 
@@ -43,11 +43,11 @@ const PeerConnection = (function(){
               { urls: 'stun:stun.l.google.com:19302' },
           
               // Your TURN server
-              {
-                urls: 'turn:34.131.190.182:3478',
-                username: 'webrtc_user',
-                credential: 'webrtc_pass'
-              }
+            //   {
+            //     urls: 'turn:34.131.190.182:3478',
+            //     username: 'webrtc_user',
+            //     credential: 'webrtc_pass'
+            //   }
             ]
           };
 
