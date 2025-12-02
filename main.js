@@ -413,7 +413,7 @@ const remoteVideo = document.getElementById('remoteVideo');
 const endCallBtn = document.getElementById('end-call-btn');
 
 // Initialize MediaSoup client
-const SERVER_URL = 'https://webrtc-test-sfu.knot.dating.'; // Change to your server URL
+const SERVER_URL = 'https://webrtc-test-sfu.knot.dating'; // Change to your server URL
 mediasoupClient = new MediasoupClient(SERVER_URL);
 
 /**
