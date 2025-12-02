@@ -3,10 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Calling App</title>
+    <title>Video Calling App - MediaSoup SFU</title>
     <link rel="stylesheet" href="./style.css">
-    <script src="./socket.io.js" defer></script>
+    
+    <!-- MediaSoup Client Library -->
+    <script src="https://unpkg.com/mediasoup-client@3.7.6/dist/mediasoup-client.min.js"></script>
+    
+    <!-- Socket.IO Client -->
+    <script src="./socket.io.js"></script>
+    
+    <!-- Your Main Script -->
     <script src="./main.js" defer></script>
+    
+    <style>
+        /* Additional styles for recording controls */
+        .recording-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: red;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: none;
+            animation: blink 1s infinite;
+        }
+        
+        .recording-indicator.active {
+            display: block;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        .recording-controls {
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .recording-controls.active {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .recording-controls button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .recording-controls button:hover {
+            background: #45a049;
+        }
+        
+        .recording-controls button.stop {
+            background: #f44336;
+        }
+        
+        .recording-controls button.stop:hover {
+            background: #da190b;
+        }
+        
+        .video-wrapper {
+            position: relative;
+        }
+    </style>
 </head>
 <body>
 
@@ -14,33 +83,132 @@
         <aside class="caller-list-wrapper">
             <h1 class="caller-list-heading h-font">Contacts</h1>
             <ul id="allusers" class="caller-list">
-                <!-- <li>
-                    <span>Rizwan Khan (You)</span>
-                    <button class="call-btn"><img width="20" src="/images/phone.png" alt=""></button>
-                </li> -->
+                <!-- User list will be populated here -->
             </ul>
         </aside>
+        
         <section class="video-call-container">
+            <!-- Username Input -->
             <div class="username-input">
-                <input id="username" type="text" placeholder="Enter Username"><button id="create-user">Create</button>
+                <input id="username" type="text" placeholder="Enter Username">
+                <button id="create-user">Create</button>
             </div>
+            
+            <!-- Video Streams -->
             <div class="video-streams">
-                
-                <div class="local-video">
+                <!-- Local Video -->
+                <div class="video-wrapper local-video">
+                    <div class="recording-indicator" id="local-recording-indicator">
+                        ⏺ RECORDING
+                    </div>
                     <video id="localVideo" autoplay muted playsinline></video>
+                    <div style="text-align: center; margin-top: 5px;">
+                        <strong>You</strong>
+                    </div>
                 </div>
-                <div class="remote-video">
+                
+                <!-- Remote Video -->
+                <div class="video-wrapper remote-video">
                     <video id="remoteVideo" autoplay playsinline></video>
+                    <div id="remote-username" style="text-align: center; margin-top: 5px;">
+                        <strong>Remote User</strong>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Recording Controls -->
+            <div class="recording-controls" id="recording-controls">
+                <button id="start-recording-btn">
+                    🔴 Start Recording
+                </button>
+                <button id="stop-recording-btn" class="stop" style="display: none;">
+                    ⏹️ Stop Recording
+                </button>
+            </div>
+            
+            <!-- Call Controls -->
             <div>
                 <button id="end-call-btn" class="call call-disconnect d-none">
-                    <img src="./images/phone-disconnect.png" alt="">
+                    <img src="./images/phone-disconnect.png" alt="End Call">
                 </button>
             </div>
         </section>
     </main>
-    
+
+    <script>
+        // This script adds recording functionality to your main.js
+        // You can also move this to main.js
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const startRecordingBtn = document.getElementById('start-recording-btn');
+            const stopRecordingBtn = document.getElementById('stop-recording-btn');
+            const recordingIndicator = document.getElementById('local-recording-indicator');
+            const recordingControls = document.getElementById('recording-controls');
+            
+            let currentRecordingId = null;
+            
+            // Show recording controls when in call
+            window.addEventListener('callStarted', () => {
+                recordingControls.classList.add('active');
+            });
+            
+            window.addEventListener('callEnded', () => {
+                recordingControls.classList.remove('active');
+                if (currentRecordingId) {
+                    // Auto-stop recording if active
+                    stopRecording();
+                }
+            });
+            
+            // Start recording button
+            startRecordingBtn.addEventListener('click', async () => {
+                try {
+                    if (!window.mediasoupDebug) {
+                        alert('MediaSoup client not initialized');
+                        return;
+                    }
+                    
+                    const recordingId = await window.mediasoupDebug.startRecording();
+                    currentRecordingId = recordingId;
+                    
+                    // Update UI
+                    startRecordingBtn.style.display = 'none';
+                    stopRecordingBtn.style.display = 'block';
+                    recordingIndicator.classList.add('active');
+                    
+                    console.log('🔴 Recording started');
+                } catch (error) {
+                    console.error('Failed to start recording:', error);
+                    alert('Failed to start recording: ' + error.message);
+                }
+            });
+            
+            // Stop recording button
+            stopRecordingBtn.addEventListener('click', async () => {
+                await stopRecording();
+            });
+            
+            async function stopRecording() {
+                if (!currentRecordingId) return;
+                
+                try {
+                    await window.mediasoupDebug.stopRecording();
+                    
+                    // Update UI
+                    startRecordingBtn.style.display = 'block';
+                    stopRecordingBtn.style.display = 'none';
+                    recordingIndicator.classList.remove('active');
+                    currentRecordingId = null;
+                    
+                    console.log('⏹️ Recording stopped');
+                    alert('Recording saved successfully!');
+                } catch (error) {
+                    console.error('Failed to stop recording:', error);
+                    alert('Failed to stop recording: ' + error.message);
+                }
+            }
+        });
+    </script>
 
 </body>
 </html>
